@@ -7,25 +7,15 @@ import plotly.express as px
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from utils.extractor import parse_resume, SKILLS_TAXONOMY
 from utils.parser import load_nlp
+from utils.styles import inject, page_header, section, divider, skill_badges
 
 st.set_page_config(page_title="Demo – RecruitLens", layout="wide")
+st.markdown(inject(), unsafe_allow_html=True)
 
-st.markdown("""
-<style>
-.skill-badge {
-    display: inline-block;
-    background: #4A90D9;
-    color: white;
-    padding: 3px 10px;
-    border-radius: 12px;
-    margin: 2px;
-    font-size: 0.82em;
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.title("Demo — Sample Resume Analysis")
-st.caption("Preloaded sample resumes parsed instantly. No upload needed.")
+st.markdown(page_header(
+    "Demo — Sample Resume Analysis",
+    "Explore preloaded sample resumes or upload the full Kaggle dataset CSV.",
+), unsafe_allow_html=True)
 
 # ── Dataset source ─────────────────────────────────────────────────────────────
 BUILTIN_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "sample_resumes.csv")
@@ -135,8 +125,8 @@ with col2:
         fig_bar.update_layout(yaxis={"categoryorder": "total ascending"}, showlegend=False)
         st.plotly_chart(fig_bar, use_container_width=True)
 
-st.divider()
-st.subheader("Parsed Resume Details")
+st.markdown(divider(), unsafe_allow_html=True)
+st.markdown(section("Parsed Resume Details"), unsafe_allow_html=True)
 
 sample_size = min(5, len(df_parse))
 indices = list(range(sample_size))
@@ -163,10 +153,7 @@ for idx in indices:
         with c2:
             st.markdown("**Skills**")
             if parsed["skills"]:
-                badges = " ".join(
-                    f'<span class="skill-badge">{s}</span>' for s in parsed["skills"]
-                )
-                st.markdown(badges, unsafe_allow_html=True)
+                st.markdown(skill_badges(parsed["skills"]), unsafe_allow_html=True)
             else:
                 st.write("—")
             st.divider()

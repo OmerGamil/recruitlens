@@ -12,55 +12,13 @@ from utils.parser import load_nlp
 from utils.ats_scorer import compute_ats_score
 from utils.anonymizer import anonymize
 from utils.database import save_parse_result
+from utils.styles import inject, page_header, section, divider, ats_bar, ats_stats, skill_badges, info_card
 
 st.set_page_config(page_title="Parse Resume – RecruitLens", layout="wide")
-
-st.markdown("""
-<style>
-.skill-badge {
-    display: inline-block;
-    background: #4A90D9;
-    color: white;
-    padding: 3px 10px;
-    border-radius: 12px;
-    margin: 2px 3px;
-    font-size: 0.82em;
-    font-weight: 500;
-}
-.info-card {
-    background: #F0F4F8;
-    border-left: 4px solid #4A90D9;
-    padding: 14px 18px;
-    border-radius: 8px;
-    margin-bottom: 14px;
-}
-.section-header {
-    font-size: 1.05em;
-    font-weight: 700;
-    color: #1A1A2E;
-    margin-bottom: 6px;
-}
-.ats-bar-wrap {
-    background: #e9ecef;
-    border-radius: 8px;
-    height: 18px;
-    width: 100%;
-    margin: 6px 0 10px 0;
-}
-.ats-bar-fill {
-    height: 18px;
-    border-radius: 8px;
-}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(inject(), unsafe_allow_html=True)
 
 with st.sidebar:
-    st.markdown("**Upload Instructions**")
-    st.markdown("- PDF, DOCX, TXT, or RTF files")
-    st.markdown("- Max file size: 50 MB")
-    st.markdown("- One file at a time")
-    st.markdown("- Scanned PDFs: OCR attempted automatically")
-    st.divider()
+    st.markdown("**Options**")
     anonymize_toggle = st.checkbox("Anonymise output (strip PII)", value=False)
     use_llm_fallback = st.checkbox(
         "LLM fallback (needs ANTHROPIC_API_KEY)",
@@ -69,10 +27,11 @@ with st.sidebar:
     )
     save_to_db = st.checkbox("Save to history", value=True)
     st.divider()
-    st.caption("From PDF to insight in seconds.")
+    st.markdown("**Supported formats**")
+    st.markdown("PDF · DOCX · TXT · RTF")
+    st.markdown("Max 50 MB · Scanned PDFs: OCR attempted")
 
-st.title("Parse a Resume")
-st.caption("Upload a PDF, DOCX, TXT, or RTF resume to extract structured data.")
+st.markdown(page_header("Parse a Resume", "Upload a PDF, DOCX, TXT, or RTF resume to extract structured data."), unsafe_allow_html=True)
 
 uploaded = st.file_uploader(
     "Drop your resume here",
@@ -82,27 +41,22 @@ uploaded = st.file_uploader(
 
 if uploaded is not None:
     nlp = load_nlp()
-
-    progress = st.progress(0, text="Reading file...")
+    progress = st.progress(0, text="Reading file…")
     time.sleep(0.1)
-
     raw_text = read_file(uploaded)
-    progress.progress(25, text="Extracting text...")
-    time.sleep(0.1)
+    progress.progress(25, text="Extracting text…")
 
     if raw_text.startswith("[") and "error" in raw_text:
         st.error(raw_text)
         st.stop()
-
     if not raw_text.strip():
         st.warning("No text could be extracted. The file may be scanned or image-based.")
         st.stop()
 
-    progress.progress(50, text="Running NLP pipeline...")
+    progress.progress(50, text="Running NLP pipeline…")
     parsed = parse_resume(raw_text, nlp)
-    progress.progress(75, text="Scoring & enriching...")
+    progress.progress(75, text="Scoring & enriching…")
 
-    # LLM fallback – only trigger when key fields are empty
     if use_llm_fallback and (not parsed.get("name") or not parsed.get("skills")):
         from utils.llm_extractor import llm_extract_fields
         llm_data = llm_extract_fields(raw_text)
@@ -131,128 +85,112 @@ if uploaded is not None:
     st.success(f"Parsed **{uploaded.name}** successfully.")
 
     # ── ATS Score ─────────────────────────────────────────────────────────────
-    ats_total = ats["total"]
-    ats_color = "#28a745" if ats_total >= 70 else ("#ffc107" if ats_total >= 45 else "#dc3545")
-    st.markdown("#### ATS Readiness Score")
-    st.markdown(
-        f'<div class="ats-bar-wrap">'
-        f'<div class="ats-bar-fill" style="width:{ats_total}%; background:{ats_color};"></div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-    mc1, mc2, mc3, mc4, mc5, mc6 = st.columns(6)
-    mc1.metric("Total", f"{ats_total}/100")
-    mc2.metric("Contact", f"{ats['breakdown']['contact']}/20")
-    mc3.metric("Skills", f"{ats['breakdown']['skills']}/25")
-    mc4.metric("Experience", f"{ats['breakdown']['experience']}/25")
-    mc5.metric("Education", f"{ats['breakdown']['education']}/15")
-    mc6.metric("Detail", f"{ats['breakdown']['length']}/15")
+    st.markdown(section("ATS Readiness Score"), unsafe_allow_html=True)
+    st.markdown(ats_bar(ats["total"]), unsafe_allow_html=True)
+    st.markdown(ats_stats(
+        ats["total"],
+        ats["breakdown"]["contact"],
+        ats["breakdown"]["skills"],
+        ats["breakdown"]["experience"],
+        ats["breakdown"]["education"],
+        ats["breakdown"]["length"],
+    ), unsafe_allow_html=True)
 
-    st.divider()
-
-    # ── Contact Info ──────────────────────────────────────────────────────────
-    st.markdown('<p class="section-header">Contact Information</p>', unsafe_allow_html=True)
+    # ── Contact ───────────────────────────────────────────────────────────────
+    st.markdown(section("Contact Information"), unsafe_allow_html=True)
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Name", display_parsed["name"] or "Not found")
-    c2.metric("Email", display_parsed["email"] or "Not found")
-    c3.metric("Phone", display_parsed["phone"] or "Not found")
-    c4.metric("LinkedIn", display_parsed["linkedin"] or "Not found")
+    c1.metric("Name",       display_parsed["name"]    or "—")
+    c2.metric("Email",      display_parsed["email"]   or "—")
+    c3.metric("Phone",      display_parsed["phone"]   or "—")
+    c4.metric("LinkedIn",   display_parsed["linkedin"] or "—")
     c5.metric("Years Exp.", f"{years_exp:.1f}")
 
-    st.divider()
+    st.markdown(divider(), unsafe_allow_html=True)
 
     left, right = st.columns([3, 2])
 
     with left:
-        # ── Skills ──────────────────────────────────────────────────────────
-        st.markdown('<p class="section-header">Skills Detected</p>', unsafe_allow_html=True)
+        st.markdown(section("Skills Detected"), unsafe_allow_html=True)
         if display_parsed["skills"]:
-            badges = " ".join(
-                f'<span class="skill-badge">{s}</span>' for s in display_parsed["skills"]
+            st.markdown(
+                f'<div style="padding:14px 16px;background:#F8FAFF;border:1px solid rgba(37,99,235,0.10);border-radius:10px;">'
+                f'{skill_badges(display_parsed["skills"])}'
+                f'</div>',
+                unsafe_allow_html=True,
             )
-            st.markdown(f'<div class="info-card">{badges}</div>', unsafe_allow_html=True)
         else:
             st.info("No skills matched the taxonomy.")
 
-        # ── Summary ──────────────────────────────────────────────────────────
-        st.markdown('<p class="section-header">Auto-Generated Summary</p>', unsafe_allow_html=True)
+        st.markdown(section("Auto-Generated Summary"), unsafe_allow_html=True)
         st.markdown(
-            f'<div class="info-card">{display_parsed["summary"]}</div>',
+            f'<div style="padding:14px 16px;background:#F8FAFF;border:1px solid rgba(37,99,235,0.10);border-left:3px solid #2563EB;border-radius:10px;font-size:0.92rem;color:#0F172A;line-height:1.7;">'
+            f'{display_parsed["summary"]}'
+            f'</div>',
             unsafe_allow_html=True,
         )
 
     with right:
-        # ── Experience ───────────────────────────────────────────────────────
-        st.markdown('<p class="section-header">Work Experience</p>', unsafe_allow_html=True)
+        st.markdown(section("Work Experience"), unsafe_allow_html=True)
         if display_parsed["experience"]:
             for exp in display_parsed["experience"]:
                 st.markdown(
-                    f'<div class="info-card">'
-                    f'<strong>{exp.get("title", "—")}</strong><br>'
-                    f'{exp.get("company", "") or ""}'
-                    f'{"<br>" if exp.get("company") else ""}'
-                    f'<em>{exp.get("dates", "")}</em>'
-                    f'</div>',
+                    info_card(
+                        exp.get("title", "—"),
+                        exp.get("company", ""),
+                        exp.get("dates", ""),
+                    ),
                     unsafe_allow_html=True,
                 )
         else:
             st.info("No experience entries detected.")
 
-        # ── Education ────────────────────────────────────────────────────────
-        st.markdown('<p class="section-header">Education</p>', unsafe_allow_html=True)
+        st.markdown(section("Education"), unsafe_allow_html=True)
         if display_parsed["education"]:
             for edu in display_parsed["education"]:
                 st.markdown(
-                    f'<div class="info-card">'
-                    f'<strong>{edu.get("degree", "—")}</strong><br>'
-                    f'{edu.get("institution", "") or ""}'
-                    f'{"<br>" if edu.get("institution") else ""}'
-                    f'<em>{edu.get("year", "")}</em>'
-                    f'</div>',
+                    info_card(
+                        edu.get("degree", "—"),
+                        edu.get("institution", ""),
+                        edu.get("year", ""),
+                    ),
                     unsafe_allow_html=True,
                 )
         else:
             st.info("No education entries detected.")
 
-    st.divider()
+    st.markdown(divider(), unsafe_allow_html=True)
 
     with st.expander("Raw extracted JSON"):
         st.json(display_parsed)
 
-    st.markdown("**Export Results**")
-    dl_col1, dl_col2 = st.columns(2)
-
-    with dl_col1:
-        json_bytes = json.dumps(display_parsed, indent=2, ensure_ascii=False).encode("utf-8")
+    col_dl1, col_dl2 = st.columns(2)
+    with col_dl1:
         st.download_button(
-            label="Download as JSON",
-            data=json_bytes,
+            label="Download JSON",
+            data=json.dumps(display_parsed, indent=2, ensure_ascii=False).encode(),
             file_name=f"{uploaded.name.rsplit('.', 1)[0]}_parsed.json",
             mime="application/json",
+            use_container_width=True,
         )
-
-    with dl_col2:
+    with col_dl2:
         flat = {
-            "name": display_parsed["name"],
-            "email": display_parsed["email"],
-            "phone": display_parsed["phone"],
-            "linkedin": display_parsed["linkedin"],
+            "name": display_parsed["name"], "email": display_parsed["email"],
+            "phone": display_parsed["phone"], "linkedin": display_parsed["linkedin"],
             "skills": ", ".join(display_parsed["skills"]),
             "experience_count": len(display_parsed["experience"]),
             "education_count": len(display_parsed["education"]),
-            "years_experience": years_exp,
-            "ats_score": ats_total,
+            "years_experience": years_exp, "ats_score": ats["total"],
             "summary": display_parsed["summary"],
         }
-        csv_bytes = pd.DataFrame([flat]).to_csv(index=False).encode("utf-8")
         st.download_button(
-            label="Download as CSV",
-            data=csv_bytes,
+            label="Download CSV",
+            data=pd.DataFrame([flat]).to_csv(index=False).encode(),
             file_name=f"{uploaded.name.rsplit('.', 1)[0]}_parsed.csv",
             mime="text/csv",
+            use_container_width=True,
         )
 
     with st.expander("View raw extracted text"):
-        st.text_area("Raw text", raw_text[:5000], height=300, disabled=True)
+        st.text_area("Raw text", raw_text[:5000], height=280, disabled=True)
 else:
     st.info("Upload a PDF, DOCX, TXT, or RTF resume above to get started.")
