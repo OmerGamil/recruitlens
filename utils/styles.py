@@ -267,14 +267,14 @@ header    {{ visibility: hidden; }}
 /* ── Feature card grid ─────────────────────────────────────── */
 .rl-grid {{
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 12px;
     margin-bottom: 36px;
 }}
 
 .rl-grid-3 {{
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 14px;
     margin-bottom: 36px;
 }}
@@ -294,7 +294,7 @@ header    {{ visibility: hidden; }}
 /* ── Steps grid ─────────────────────────────────────────────── */
 .rl-steps {{
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
     margin-top: 8px;
 }}
@@ -326,7 +326,7 @@ header    {{ visibility: hidden; }}
 /* ── Stat strip ─────────────────────────────────────────────── */
 .rl-stats {{
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     gap: 10px;
     margin-bottom: 28px;
 }}
@@ -372,11 +372,11 @@ def inject() -> str:
 
 def hero(eyebrow: str, title: str, accent: str, subtitle: str) -> str:
     return f"""
-<div style="position:relative;background:linear-gradient(160deg,#EFF6FF 0%,#FFFFFF 55%,#F0F9FF 100%);border:1px solid rgba(37,99,235,0.14);border-radius:22px;padding:60px 52px 52px;text-align:center;overflow:hidden;margin-bottom:36px;box-shadow:0 4px 24px rgba(37,99,235,0.07),0 1px 4px rgba(37,99,235,0.04);">
+<div style="position:relative;background:linear-gradient(160deg,#EFF6FF 0%,#FFFFFF 55%,#F0F9FF 100%);border:1px solid rgba(37,99,235,0.14);border-radius:22px;padding:clamp(28px,5vw,60px) clamp(20px,5vw,52px);text-align:center;overflow:hidden;margin-bottom:36px;box-shadow:0 4px 24px rgba(37,99,235,0.07),0 1px 4px rgba(37,99,235,0.04);">
   <div style="position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:620px;height:260px;background:radial-gradient(ellipse,rgba(37,99,235,0.12) 0%,transparent 70%);pointer-events:none;"></div>
   <div style="position:relative;z-index:1;">
     <div style="display:inline-block;background:rgba(37,99,235,0.07);border:1px solid rgba(37,99,235,0.2);border-radius:999px;padding:5px 18px;font-size:0.70rem;color:{_P};letter-spacing:0.14em;text-transform:uppercase;font-weight:700;margin-bottom:22px;">{eyebrow}</div>
-    <h1 style="font-size:3.2rem;font-weight:900;color:{_D};margin:0 0 14px;line-height:1.07;letter-spacing:-0.025em;">{title} <span style="background:linear-gradient(130deg,{_P} 0%,{_PL} 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{accent}</span></h1>
+    <h1 style="font-size:clamp(1.8rem,4vw,3.2rem);font-weight:900;color:{_D};margin:0 0 14px;line-height:1.1;letter-spacing:-0.02em;">{title} <span style="background:linear-gradient(130deg,{_P} 0%,{_PL} 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{accent}</span></h1>
     <div style="font-size:1.05rem;color:{_M};line-height:1.7;margin:0 auto;max-width:520px;text-align:center !important;">{subtitle}</div>
   </div>
 </div>"""
