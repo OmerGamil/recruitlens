@@ -13,7 +13,9 @@ CSS = f"""
 /* ── Streamlit chrome ──────────────────────────────────────── */
 #MainMenu {{ visibility: hidden; }}
 footer    {{ visibility: hidden; }}
-header    {{ visibility: hidden; }}
+/* Keep header visible so the sidebar toggle button works */
+[data-testid="stHeader"] {{ background: transparent !important; }}
+[data-testid="stToolbar"] {{ display: none !important; }}
 
 .block-container {{
     padding-top: 1.5rem !important;
