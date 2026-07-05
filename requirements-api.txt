@@ -1,0 +1,6 @@
+# Extra deps for running the FastAPI REST layer (api.py) locally
+# Not needed on Heroku (Streamlit-only deployment)
+-r requirements.txt
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
