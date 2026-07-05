@@ -13,9 +13,12 @@ import streamlit as st
 
 
 def require_auth() -> None:
-    password = os.environ.get("RECRUITLENS_PASSWORD") or st.secrets.get(
-        "RECRUITLENS_PASSWORD", ""
-    )
+    password = os.environ.get("RECRUITLENS_PASSWORD", "")
+    if not password:
+        try:
+            password = st.secrets.get("RECRUITLENS_PASSWORD", "")
+        except Exception:
+            password = ""
     if not password:
         return  # no password configured → open access
 
