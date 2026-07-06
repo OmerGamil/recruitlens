@@ -5,6 +5,9 @@ backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#F0F4F8"
 textColor = "#1A1A2E"
 
+[client]
+toolbarMode = "viewer"
+
 [server]
 headless = true
 enableCORS = false
